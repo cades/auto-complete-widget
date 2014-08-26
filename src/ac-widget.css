@@ -1,0 +1,64 @@
+.ac.widget {
+  border: black 5px solid;
+  border-radius: 4px;
+  border: 1px solid #CCC;
+  padding: 3px 0 4px 5px;
+}
+.ac.tag {
+  background-color: #EEE;
+  border-radius: 3px;
+  border: 1px solid #CCC;
+  padding: 1px 0 1px 4px;
+  margin-right: 4px;
+}
+.ac.tag.focus {
+  background-color: #FEFBC6;
+}
+.ac.close {
+  font-size: 20px;
+  font-weight: bold;
+  line-height: 18px;
+  color: #000;
+  text-shadow: 0 1px 0 #fff;
+  opacity: 0.2;
+  filter: alpha(opacity=20);
+  text-decoration: none;
+  font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+}
+.ac.close:hover {
+  opacity: 0.4;
+  filter: alpha(opacity=40);
+  cursor: pointer;
+}
+.ac.input {
+  display: inline-block;
+  position: relative;
+}
+.ac.text-field {
+  border: none;
+  font-size: 16px;
+}
+.ac.text-field:focus {
+  outline: 0;
+}
+.ac.menu {
+  display: inline-block;
+  border: black 5px solid;
+  border-radius: 6px;
+  border: 1px solid #CCC;
+  padding: 4px 0px;
+  position: absolute;
+  left: 2px;
+  top: 22px;
+  background-color: #fff;
+}
+.ac.menu-item {
+  padding: 4px 8px;
+  font-weight: bold;
+}
+.ac.menu-item:hover {
+  Background-color: #DDD;
+}
+.ac.hide {
+  display: none;
+}

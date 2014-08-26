@@ -1,0 +1,23 @@
+(function(window, document){
+/**
+ * @description
+ * This auto-complete Plugin is an answer to Mozilla F2E Pre-test.
+ * Written by Hong-Ken Kao (cades)
+ * Email: endlessfighting0327@gmail.com
+ *
+ * Usage:
+ * 
+ *   AutoComplete.bind(elem, items);
+ *
+ * @param elem
+ *   An input element. This element's type will be changed to `hidden`.
+ *   When a tag is added or removed, this element's value would be updated accordingly.
+ * @param items
+ *   An array of string.
+ *
+ *
+ */
+
+<%= contents %>
+
+}(window, document));
