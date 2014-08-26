@@ -24,5 +24,5 @@ gulp.task('default', function(){
 });
 
 gulp.task('watch', function(){
-  gulp.watch(['src/auto-complete.js', 'src/wrap.template'], ['default']);
+  gulp.watch(['src/auto-complete.js', 'src/wrap.template', 'src/ac-widget.css'], ['default']);
 });
