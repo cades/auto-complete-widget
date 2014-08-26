@@ -75,7 +75,7 @@ function createInputWidget() {
 function createTag(text) {
   var tagHTML =
 '<span class="ac tag">' + text +
-'<span class="ac close">&times</span>' +
+'<span class="ac rm">&times</span>' +
 '</span>';
   return html2elem(tagHTML);
 }
@@ -127,7 +127,7 @@ Sandbox.module('Tags', function(util){
       if (tags.some(contains(text))) // Don't allow duplicate tag
         return;
       var tagElem = createTag(text);
-      tagElem.querySelector('.ac.close').onclick = function(e){
+      tagElem.querySelector('.ac.rm').onclick = function(e){
         remove(text);
         closeClickHandler(e);
       };

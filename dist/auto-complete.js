@@ -95,7 +95,7 @@ function createInputWidget() {
 function createTag(text) {
   var tagHTML =
 '<span class="ac tag">' + text +
-'<span class="ac close">&times</span>' +
+'<span class="ac rm">&times</span>' +
 '</span>';
   return html2elem(tagHTML);
 }
@@ -147,7 +147,7 @@ Sandbox.module('Tags', function(util){
       if (tags.some(contains(text))) // Don't allow duplicate tag
         return;
       var tagElem = createTag(text);
-      tagElem.querySelector('.ac.close').onclick = function(e){
+      tagElem.querySelector('.ac.rm').onclick = function(e){
         remove(text);
         closeClickHandler(e);
       };
@@ -281,7 +281,7 @@ function bind(elem, data) {
 (function() {
   var head = document.head,
       style = document.createElement('style'),
-      css = ".ac.widget{border-radius:4px;border:1px solid #CCC;padding:3px 0 4px 5px}.ac.tag{background-color:#EEE;border-radius:3px;border:1px solid #CCC;padding:1px 0 1px 4px;margin-right:4px}.ac.tag.focus{background-color:#FEFBC6}.ac.close{font-size:20px;font-weight:700;line-height:18px;color:#000;text-shadow:0 1px 0 #fff;opacity:.2;filter:alpha(opacity=20);text-decoration:none;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}.ac.close:hover{opacity:.4;filter:alpha(opacity=40);cursor:pointer}.ac.input{display:inline-block;position:relative}.ac.text-field{border:none;font-size:16px}.ac.text-field:focus{outline:0}.ac.menu{display:inline-block;border-radius:6px;border:1px solid #CCC;padding:4px 0;position:absolute;left:2px;top:22px;background-color:#fff}.ac.menu-item{padding:4px 8px;font-weight:700}.ac.menu-item:hover{Background-color:#DDD}.ac.hide{display:none}";
+      css = ".ac.widget{border-radius:4px;border:1px solid #CCC;padding:3px 0 4px 5px;background-color:#FFF;text-align:left}.ac.tag{background-color:#EEE;border-radius:3px;border:1px solid #CCC;padding:1px 0 1px 4px;margin:2px 4px 2px 0;display:inline-block}.ac.tag.focus{background-color:#FEFBC6}.ac.rm{font-size:20px;font-weight:700;line-height:18px;color:#000;text-shadow:0 1px 0 #fff;opacity:.2;filter:alpha(opacity=20);text-decoration:none;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}.ac.rm:hover{opacity:.4;filter:alpha(opacity=40);cursor:pointer}.ac.input{display:inline-block;position:relative}.ac.text-field{border:none;font-size:16px;width:100%}.ac.text-field:focus{outline:0}.ac.menu{display:inline-block;border-radius:6px;border:1px solid #CCC;padding:4px 0;position:absolute;left:2px;top:22px;background-color:#fff;z-index:2000}.ac.menu-item{padding:4px 8px;text-align:left}.ac.menu-item:hover{Background-color:#DDD}.ac.hide{display:none}";
   style.type = 'text/css';
   style.appendChild(document.createTextNode(css));
   head.appendChild(style);
