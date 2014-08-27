@@ -157,6 +157,7 @@ Sandbox.module('Tags', function(util){
 
 Sandbox.module('Menu', function(){
   return function(container, items, itemClickHandler){
+    var focusedItem;
     function hideMenu() {
       addClass(container, 'hide');
     }
@@ -170,8 +171,17 @@ Sandbox.module('Menu', function(){
         .map(createMenuItem)
         .map(function(item){
           item.onclick = itemClickHandler;
+          item.onmouseover = function(){
+            if (focusedItem)
+              defocus();
+            focus(item);
+          };
+          item.onmouseout = function(){
+            defocus();
+          };
           container.appendChild(item);
         });
+      focusedItem = null;
     }
     function removeMenuItems() {
       while (container.firstChild) {
@@ -181,11 +191,54 @@ Sandbox.module('Menu', function(){
     function hasItems() {
       return container.hasChildNodes();
     }
+
+    function focus(elem) {
+      addClass(elem, 'focus');
+      focusedItem = elem;
+    }
+    function defocus() {
+      removeClass(focusedItem, 'focus');
+      focusedItem = null;
+    }
+    function focusDown() {
+      if (!focusedItem) {
+        focus(container.firstChild);
+        return;
+      }
+      if (focusedItem.nextSibling) {
+        var elem = focusedItem.nextSibling;
+        defocus();
+        focus(elem);
+        return;
+      }
+    }
+    function focusUp() {
+      if (focusedItem && !focusedItem.previousSibling) {
+        defocus();
+        return;
+      }
+      if (focusedItem && focusedItem.previousSibling) {
+        var elem = focusedItem.previousSibling;
+        defocus();
+        focus(elem);
+        return;
+      }
+    }
+    function hasFocusedItem() {
+      return !!focusedItem;
+    }
+    function focusedItemText() {
+      return focusedItem.innerText;
+    }
     return {
       hide: hideMenu,
       show: showMenu,
       update: update,
-      hasItems: hasItems
+      hasItems: hasItems,
+      focusDown: focusDown,
+      focusUp: focusUp,
+      hasFocusedItem: hasFocusedItem,
+      focusedItemText: focusedItemText
     };
   };
 });
@@ -211,25 +264,49 @@ Sandbox.module('Widget', ['TextField', 'Tags', 'Menu', function(TextField, Tags,
       updateOriginalInputValue();
     }
 
-    function menuItemClicked(e) {
-      tags.add(e.target.innerText);
+    function addTagWorkflow(text) {
+      tags.add(text);
       updateOriginalInputValue();
       menu.hide();
       textField.clear();
       textFieldElem.focus();
     }
 
+    function menuItemClicked(e) {
+      addTagWorkflow(e.target.innerText);
+    }
+
     function keyup(e) {
       var input = e.target.value;
       if (input === '') {
         menu.hide();
-      } else {
-        menu.update(input);
-        if (menu.hasItems()) {
-          menu.show();
-        } else {
-          menu.hide();
+        return;
+      }
+
+      var CODE_RETURN = 13,
+          CODE_UP   = 38,
+          CODE_DOWN = 40,
+          c = e.keyCode;
+      if (c === CODE_DOWN) {
+        menu.focusDown();
+        return;
+      }
+      if (c === CODE_UP) {
+        menu.focusUp();
+        return;
+      }
+      if (c === CODE_RETURN) {
+        if (menu.hasFocusedItem()) {
+          addTagWorkflow(menu.focusedItemText());
         }
+        return;
+      }
+
+      menu.update(input);
+      if (menu.hasItems()) {
+        menu.show();
+      } else {
+        menu.hide();
       }
     }
 
@@ -261,7 +338,7 @@ function bind(elem, data) {
 (function() {
   var head = document.head,
       style = document.createElement('style'),
-      css = ".ac.widget{border-radius:4px;border:1px solid #CCC;padding:3px 0 4px 5px;background-color:#FFF;text-align:left}.ac.tag{background-color:#EEE;border-radius:3px;border:1px solid #CCC;padding:1px 0 1px 4px;margin:2px 4px 2px 0;display:inline-block}.ac.tag.focus{background-color:#FEFBC6}.ac.rm{font-size:20px;font-weight:700;line-height:18px;color:#000;text-shadow:0 1px 0 #fff;opacity:.2;filter:alpha(opacity=20);text-decoration:none;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}.ac.rm:hover{opacity:.4;filter:alpha(opacity=40);cursor:pointer}.ac.input{display:inline-block;position:relative}.ac.text-field{border:none;font-size:16px;width:100%}.ac.text-field:focus{outline:0}.ac.menu{display:inline-block;border-radius:6px;border:1px solid #CCC;padding:4px 0;position:absolute;left:2px;top:22px;background-color:#fff;z-index:2000}.ac.menu-item{padding:4px 8px;text-align:left}.ac.menu-item:hover{Background-color:#DDD}.ac.hide{display:none}";
+      css = ".ac.widget{border-radius:4px;border:1px solid #CCC;padding:3px 0 4px 5px;background-color:#FFF;text-align:left}.ac.tag{background-color:#EEE;border-radius:3px;border:1px solid #CCC;padding:1px 0 1px 4px;margin:2px 4px 2px 0;display:inline-block}.ac.tag.focus{background-color:#FEFBC6}.ac.rm{font-size:20px;font-weight:700;line-height:18px;color:#000;text-shadow:0 1px 0 #fff;opacity:.2;filter:alpha(opacity=20);text-decoration:none;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif}.ac.rm:hover{opacity:.4;filter:alpha(opacity=40);cursor:pointer}.ac.input{display:inline-block;position:relative}.ac.text-field{border:none;font-size:16px;width:100%}.ac.text-field:focus{outline:0}.ac.menu{display:inline-block;border-radius:6px;border:1px solid #CCC;padding:4px 0;position:absolute;left:2px;top:22px;background-color:#fff;z-index:2000}.ac.menu-item{padding:4px 8px;text-align:left}.ac.menu-item.focus{Background-color:#DDD}.ac.hide{display:none}";
   style.type = 'text/css';
   style.appendChild(document.createTextNode(css));
   head.appendChild(style);

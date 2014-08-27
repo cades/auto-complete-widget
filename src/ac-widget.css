@@ -61,7 +61,7 @@
   padding: 4px 8px;
   text-align: left;
 }
-.ac.menu-item:hover {
+.ac.menu-item.focus {
   Background-color: #DDD;
 }
 .ac.hide {

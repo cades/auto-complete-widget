@@ -157,6 +157,7 @@ Sandbox.module('Tags', function(util){
 
 Sandbox.module('Menu', function(){
   return function(container, items, itemClickHandler){
+    var focusedItem;
     function hideMenu() {
       addClass(container, 'hide');
     }
@@ -170,8 +171,17 @@ Sandbox.module('Menu', function(){
         .map(createMenuItem)
         .map(function(item){
           item.onclick = itemClickHandler;
+          item.onmouseover = function(){
+            if (focusedItem)
+              defocus();
+            focus(item);
+          };
+          item.onmouseout = function(){
+            defocus();
+          };
           container.appendChild(item);
         });
+      focusedItem = null;
     }
     function removeMenuItems() {
       while (container.firstChild) {
@@ -181,11 +191,54 @@ Sandbox.module('Menu', function(){
     function hasItems() {
       return container.hasChildNodes();
     }
+
+    function focus(elem) {
+      addClass(elem, 'focus');
+      focusedItem = elem;
+    }
+    function defocus() {
+      removeClass(focusedItem, 'focus');
+      focusedItem = null;
+    }
+    function focusDown() {
+      if (!focusedItem) {
+        focus(container.firstChild);
+        return;
+      }
+      if (focusedItem.nextSibling) {
+        var elem = focusedItem.nextSibling;
+        defocus();
+        focus(elem);
+        return;
+      }
+    }
+    function focusUp() {
+      if (focusedItem && !focusedItem.previousSibling) {
+        defocus();
+        return;
+      }
+      if (focusedItem && focusedItem.previousSibling) {
+        var elem = focusedItem.previousSibling;
+        defocus();
+        focus(elem);
+        return;
+      }
+    }
+    function hasFocusedItem() {
+      return !!focusedItem;
+    }
+    function focusedItemText() {
+      return focusedItem.innerText;
+    }
     return {
       hide: hideMenu,
       show: showMenu,
       update: update,
-      hasItems: hasItems
+      hasItems: hasItems,
+      focusDown: focusDown,
+      focusUp: focusUp,
+      hasFocusedItem: hasFocusedItem,
+      focusedItemText: focusedItemText
     };
   };
 });
@@ -211,25 +264,49 @@ Sandbox.module('Widget', ['TextField', 'Tags', 'Menu', function(TextField, Tags,
       updateOriginalInputValue();
     }
 
-    function menuItemClicked(e) {
-      tags.add(e.target.innerText);
+    function addTagWorkflow(text) {
+      tags.add(text);
       updateOriginalInputValue();
       menu.hide();
       textField.clear();
       textFieldElem.focus();
     }
 
+    function menuItemClicked(e) {
+      addTagWorkflow(e.target.innerText);
+    }
+
     function keyup(e) {
       var input = e.target.value;
       if (input === '') {
         menu.hide();
-      } else {
-        menu.update(input);
-        if (menu.hasItems()) {
-          menu.show();
-        } else {
-          menu.hide();
+        return;
+      }
+
+      var CODE_RETURN = 13,
+          CODE_UP   = 38,
+          CODE_DOWN = 40,
+          c = e.keyCode;
+      if (c === CODE_DOWN) {
+        menu.focusDown();
+        return;
+      }
+      if (c === CODE_UP) {
+        menu.focusUp();
+        return;
+      }
+      if (c === CODE_RETURN) {
+        if (menu.hasFocusedItem()) {
+          addTagWorkflow(menu.focusedItemText());
         }
+        return;
+      }
+
+      menu.update(input);
+      if (menu.hasItems()) {
+        menu.show();
+      } else {
+        menu.hide();
       }
     }
 
