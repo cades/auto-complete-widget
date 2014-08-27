@@ -5,11 +5,18 @@ This plugin is an answer to Mozilla's F2E Pre-test, written by Hong-Ken Kao (cad
 
 The plugin is under `dist/` folder.
 
+
 Usage
 =====
 
+Include `dist/auto-complete.js`, then setup the plugin:
+
 ```js
+<script>
+var elem = document.getElementById('myInput'),
+    items = ['many', 'menu', 'items'];
 AutoComplete.bind(elem, items);
+</script>
 ```
 
 - `elem` is an input DOM element.
@@ -17,7 +24,8 @@ AutoComplete.bind(elem, items);
 	- When a tag is added or removed, this element's value would be updated accordingly. 
 - `items` is an array of string.
 
-Open example.html to 
+Open example.html to see the demo.
+
 
 Build
 =====
@@ -34,6 +42,7 @@ That generates 3 files:
 - dist/auto-complete.js
 - dist/auto-complete.min.js
 - test/auto-complete.js
+
 
 Test
 ====
