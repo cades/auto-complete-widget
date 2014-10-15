@@ -1,4 +1,5 @@
 var gulp = require('gulp'),
+    jshint = require('gulp-jshint'),
     replace = require('gulp-replace'),
     wrap = require('gulp-wrap'),
     uglify = require('gulp-uglify'),
@@ -14,6 +15,8 @@ function cssString(){
 
 gulp.task('default', function(){
   return gulp.src('src/auto-complete.js')
+    .pipe(jshint())
+    .pipe(jshint.reporter('default'))
     .pipe(replace('{inject css here}', cssString))
     .pipe(gulp.dest('test/'))
     .pipe(wrap({ src: 'src/wrap.template' }))

@@ -1,45 +1,3 @@
-// YUI3 Sandbox pattern variant
-// It's more like AngularJS' DI mechanism
-var Sandbox = (function(){
-
-  var modules = {};
-
-  function reset() {
-    modules = {};
-  }
-
-  function lookup(name) {
-    if (typeof modules[name] === "undefined")
-      throw 'module `' + name + '` is not defined';
-    return modules[name];
-  }
-
-  function module(name, rest) {
-    var callback;
-    if (Array.isArray(rest)) {
-      callback = rest.pop();
-      modules[name] = callback.apply(callback, rest.map(lookup));
-    } else {
-      callback = rest;
-      modules[name] = callback();
-    }
-  }
-
-  function use() {
-    var args = Array.prototype.slice.call(arguments),
-        callback = args.pop(),
-        askedForModules = args.map(lookup);
-    callback.apply(callback, askedForModules);
-  }
-
-  return {
-    reset: reset,
-    module: module,
-    use: use
-  };
-
-}());
-
 // function utilities
 function nodeList2array(list) {
   return Array.prototype.slice.call(list);
@@ -98,228 +56,225 @@ function removeClass(elem, className) {
 }
 
 
-// use Sandbox to tackle the problem
-Sandbox.module('TextField', function(){
-  return function(elem){
-    function value(){
-      if (arguments.length === 0) {
-        return elem.value;
-      }
-      return elem.value = arguments[0];
+// modules
+function makeTextField(elem){
+  function value(){
+    if (arguments.length === 0) {
+      return elem.value;
     }
-    return {
-      value: value,
-      clear: function(){ elem.value = ''; }
-    };
+    return (elem.value = arguments[0]);
+  }
+  return {
+    value: value,
+    clear: function(){ elem.value = ''; }
   };
-});
+}
 
-Sandbox.module('Tags', function(util){
-  return function(container, closeClickHandler){
-    var tags = [],
-        inputDiv = container.querySelector('.ac.input');
-    function contains(text) {
-      return function(tag){
-        return tag.text === text;
+function makeTags(container, closeClickHandler){
+  var tags = [],
+      inputDiv = container.querySelector('.ac.input');
+  function contains(text) {
+    return function(tag){
+      return tag.text === text;
+    };
+  }
+  function add(text) {
+    if (tags.some(contains(text))) // Don't allow duplicate tag
+      return;
+    var tagElem = createTag(text),
+        closeElem = tagElem.querySelector('.ac.rm');
+    closeElem.addEventListener('click', function(e){
+      remove(text);
+      closeClickHandler(e);
+    });
+    container.insertBefore(tagElem, inputDiv);
+    tags.push({
+      text: text,
+      elem: tagElem
+    });
+  }
+  function remove(text) {
+    if (!tags.some(contains(text)))
+      return;
+    var tag = tags.filter(contains(text))[0];
+    container.removeChild(tag.elem);
+    tags.splice( tags.indexOf(tag), 1 );
+  }
+  function data() {
+    return tags.map(function(tag){ return tag.text; });
+  }
+  return {
+    add: add,
+    remove: remove,
+    data: data
+  };
+}
+
+function makeMenu(container, items, itemClickHandler){
+  var focusedItem;
+  function hideMenu() {
+    addClass(container, 'hide');
+  }
+  function showMenu() {
+    removeClass(container, 'hide');
+  }
+  function update(text) {
+    function containsText(s) {
+      return s.search(new RegExp(text, 'i')) !== -1;
+    }
+    function mouseover(item) {
+      return function() {
+        if (focusedItem)
+          defocus();
+        focus(item);
       };
     }
-    function add(text) {
-      if (tags.some(contains(text))) // Don't allow duplicate tag
-        return;
-      var tagElem = createTag(text);
-      tagElem.querySelector('.ac.rm').onclick = function(e){
-        remove(text);
-        closeClickHandler(e);
-      };
-      container.insertBefore(tagElem, inputDiv);
-      tags.push({
-        text: text,
-        elem: tagElem
+    removeMenuItems();
+    items.filter(containsText)
+      .slice(0,6)
+      .map(createMenuItem)
+      .map(function(item){
+        item.addEventListener('click', itemClickHandler);
+        item.addEventListener('mouseover', mouseover(item));
+        item.addEventListener('mouseout', defocus);
+        container.appendChild(item);
       });
+    focusedItem = null;
+  }
+  function removeMenuItems() {
+    while (container.firstChild) {
+      container.removeChild(container.firstChild);
     }
-    function remove(text) {
-      if (!tags.some(contains(text)))
-        return;
-      var tag = tags.filter(contains(text))[0];
-      container.removeChild(tag.elem);
-      tags.splice( tags.indexOf(tag), 1 );
-    }
-    function data() {
-      return tags.map(function(tag){ return tag.text; });
-    }
-    return {
-      add: add,
-      remove: remove,
-      data: data
-    };
-  };
-});
+  }
+  function hasItems() {
+    return container.hasChildNodes();
+  }
 
-Sandbox.module('Menu', function(){
-  return function(container, items, itemClickHandler){
-    var focusedItem;
-    function hideMenu() {
-      addClass(container, 'hide');
-    }
-    function showMenu() {
-      removeClass(container, 'hide');
-    }
-    function update(text) {
-      removeMenuItems();
-      items.filter(function(d){ return d.search(new RegExp(text, 'i')) !== -1; })
-        .slice(0,6)
-        .map(createMenuItem)
-        .map(function(item){
-          item.onclick = itemClickHandler;
-          item.onmouseover = function(){
-            if (focusedItem)
-              defocus();
-            focus(item);
-          };
-          item.onmouseout = function(){
-            defocus();
-          };
-          container.appendChild(item);
-        });
-      focusedItem = null;
-    }
-    function removeMenuItems() {
-      while (container.firstChild) {
-        container.removeChild(container.firstChild);
-      }
-    }
-    function hasItems() {
-      return container.hasChildNodes();
-    }
-
-    function focus(elem) {
-      addClass(elem, 'focus');
-      focusedItem = elem;
-    }
-    function defocus() {
+  function focus(elem) {
+    addClass(elem, 'focus');
+    focusedItem = elem;
+  }
+  function defocus() {
+    if (focusedItem)
       removeClass(focusedItem, 'focus');
-      focusedItem = null;
+    focusedItem = null;
+  }
+  function focusDown() {
+    if (!container.hasChildNodes()) return;
+    if (!focusedItem) {
+      focus(container.firstChild);
+      return;
     }
-    function focusDown() {
-      if (!focusedItem) {
-        focus(container.firstChild);
-        return;
-      }
-      if (focusedItem.nextSibling) {
-        var elem = focusedItem.nextSibling;
-        defocus();
-        focus(elem);
-        return;
-      }
+    if (focusedItem.nextSibling) {
+      var elem = focusedItem.nextSibling;
+      defocus();
+      focus(elem);
+      return;
     }
-    function focusUp() {
-      if (focusedItem && !focusedItem.previousSibling) {
-        defocus();
-        return;
-      }
-      if (focusedItem && focusedItem.previousSibling) {
-        var elem = focusedItem.previousSibling;
-        defocus();
-        focus(elem);
-        return;
-      }
+  }
+  function focusUp() {
+    if (focusedItem && !focusedItem.previousSibling) {
+      defocus();
+      return;
     }
-    function hasFocusedItem() {
-      return !!focusedItem;
+    if (focusedItem && focusedItem.previousSibling) {
+      var elem = focusedItem.previousSibling;
+      defocus();
+      focus(elem);
+      return;
     }
-    function focusedItemText() {
-      return focusedItem.innerText;
-    }
-    return {
-      hide: hideMenu,
-      show: showMenu,
-      update: update,
-      hasItems: hasItems,
-      focusDown: focusDown,
-      focusUp: focusUp,
-      hasFocusedItem: hasFocusedItem,
-      focusedItemText: focusedItemText
-    };
+  }
+  function hasFocusedItem() {
+    return !!focusedItem;
+  }
+  function focusedItemText() {
+    return focusedItem.innerText;
+  }
+  return {
+    hide: hideMenu,
+    show: showMenu,
+    update: update,
+    hasItems: hasItems,
+    focusDown: focusDown,
+    focusUp: focusUp,
+    hasFocusedItem: hasFocusedItem,
+    focusedItemText: focusedItemText
   };
-});
+}
 
 // Put modules together. Wire them up. Bind event handlers.
-Sandbox.module('Widget', ['TextField', 'Tags', 'Menu', function(TextField, Tags, Menu) {
-  return function(origInputElem, items){
-    var widgetElem = createInputWidget(),
-        menuElem = widgetElem.querySelector('.ac.menu'),
-        textFieldElem = widgetElem.querySelector('.ac.text-field'),
-        tagsElem = widgetElem.querySelector('.ac.tags'),
+function makeWidget(origInputElem, items){
+  var widgetElem = createInputWidget(),
+      menuElem = widgetElem.querySelector('.ac.menu'),
+      textFieldElem = widgetElem.querySelector('.ac.text-field'),
+      tagsElem = widgetElem.querySelector('.ac.tags'),
 
-        origInput = TextField( origInputElem ),
-        textField = TextField( textFieldElem ),
-        tags = Tags( tagsElem, closeClicked ),
-        menu = Menu( menuElem, items, menuItemClicked );
+      origInput = makeTextField( origInputElem ),
+      textField = makeTextField( textFieldElem ),
+      tags = makeTags( tagsElem, closeClicked ),
+      menu = makeMenu( menuElem, items, menuItemClicked ),
 
-    function updateOriginalInputValue() {
-      origInput.value( tags.data().join(',') );
-    }
+      CODE_DOWN = 40,
+      CODE_UP = 38,
+      CODE_RETURN = 13,
+      special_keys = [CODE_DOWN, CODE_UP, CODE_RETURN];
 
-    function closeClicked(e) {
-      updateOriginalInputValue();
-    }
+  function updateOriginalInputValue() {
+    origInput.value( tags.data().join(',') );
+  }
 
-    function addTagWorkflow(text) {
-      tags.add(text);
-      updateOriginalInputValue();
-      menu.hide();
-      textField.clear();
-      textFieldElem.focus();
-    }
+  function closeClicked(e) {
+    updateOriginalInputValue();
+  }
 
-    function menuItemClicked(e) {
-      addTagWorkflow(e.target.innerText);
-    }
-
-    function keyup(e) {
-      var input = e.target.value;
-      if (input === '') {
-        menu.hide();
-        return;
-      }
-
-      var CODE_RETURN = 13,
-          CODE_UP   = 38,
-          CODE_DOWN = 40,
-          c = e.keyCode;
-      if (c === CODE_DOWN) {
-        menu.focusDown();
-        return;
-      }
-      if (c === CODE_UP) {
-        menu.focusUp();
-        return;
-      }
-      if (c === CODE_RETURN) {
-        if (menu.hasFocusedItem()) {
-          addTagWorkflow(menu.focusedItemText());
-        }
-        return;
-      }
-
-      menu.update(input);
-      if (menu.hasItems()) {
-        menu.show();
-      } else {
-        menu.hide();
-      }
-    }
-
-    // initialization
-    var self = this;
-    origInputElem.type = 'hidden';
-    insertAfter(widgetElem, origInputElem);
+  function addTagWorkflow(text) {
+    tags.add(text);
+    updateOriginalInputValue();
     menu.hide();
-    textFieldElem.onkeyup = keyup;
+    textField.clear();
+    textFieldElem.focus();
+  }
 
-    return {};
-  };
-}]);
+  function menuItemClicked(e) {
+    addTagWorkflow(e.target.innerText);
+  }
+
+  // initialization
+  origInputElem.type = 'hidden';
+  insertAfter(widgetElem, origInputElem);
+  menu.hide();
+
+  textFieldElem.addEventListener('keydown', function(e){
+    if (e.keyCode === CODE_DOWN)
+      menu.focusDown();
+  });
+  textFieldElem.addEventListener('keydown', function(e){
+    if (e.keyCode === CODE_UP)
+      menu.focusUp();
+  });
+  textFieldElem.addEventListener('keydown', function(e){
+    if (e.keyCode === CODE_RETURN && menu.hasFocusedItem())
+      addTagWorkflow(menu.focusedItemText());
+  });
+  textFieldElem.addEventListener('keyup', function(e){
+    var input = textField.value();
+    if (input === '') {
+      // if input is empty string, we do not update menu,
+      // because this will generate alot of invisible DOM nodes
+      // And they will be discard on next update.
+      return;
+    }
+    if (special_keys.indexOf(e.keyCode) === -1)
+      menu.update(input);
+  });
+  textFieldElem.addEventListener('keyup', function(){
+    if (!menu.hasItems() || textField.value() === '')
+      menu.hide();
+    else
+      menu.show();
+  });
+  return {};
+}
 
 
 function bind(elem, data) {
@@ -329,9 +284,7 @@ function bind(elem, data) {
   if (elem.tagName !== 'INPUT')
     throw 'AutoComplete can only bind to an input element';
 
-  Sandbox.use('Widget', function(Widget){
-    Widget(elem, data);
-  });
+  makeWidget(elem, data);
 }
 
 // Programmatically create a style sheet in <head> on plugin load

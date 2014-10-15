@@ -1,34 +1,12 @@
-describe('Sanbox', function(){
-  describe('#use', function(){
-    it('should call the callback', function(){
-      Sandbox.use(function(){
-        expect(1).to.be.ok;
-      });
-    });
-  });
-  describe('#module', function(){
-    it('should define new module', function(){
-      Sandbox.module('S1', function(){
-        return {name: 'S1 module'};
-      });
-      Sandbox.use('S1', function(S1){
-        expect(S1.name).to.equal('S1 module');
-      });
-    });
-  });
-});
-
 describe('TextField', function(){
   it('wraps a DOM element', function(){
-    Sandbox.use('TextField', function(TextField){
-      var input = document.createElement('input'),
-          tf = TextField(input);
-      tf.value('mozilla rocks');
-      expect(input.value).to.equal('mozilla rocks');
-      expect(tf.value()).to.equal(input.value);
-      tf.clear();
-      expect(input.value).to.be.empty;
-    });
+    var input = document.createElement('input'),
+        tf = makeTextField(input);
+    tf.value('mozilla rocks');
+    expect(input.value).to.equal('mozilla rocks');
+    expect(tf.value()).to.equal(input.value);
+    tf.clear();
+    expect(input.value).to.be.empty;
   });
 });
 
@@ -36,9 +14,7 @@ describe('Tags', function(){
   beforeEach(function(){
     var self = this;
     this.container = document.createElement('div');
-    Sandbox.use('Tags', function(Tags){
-      self.tags = Tags(self.container);
-    });
+    self.tags = makeTags(self.container);
   });
 
   it('can add tag element on container', function(){
@@ -72,9 +48,7 @@ describe('Menu', function(){
         };
     this.called = false;
     this.menuElem = document.createElement('div');
-    Sandbox.use('Menu', function(Menu){
-      self.menu = Menu(self.menuElem, items, callback);
-    });
+    self.menu = makeMenu(self.menuElem, items, callback);
   });
 
   describe('#hide', function(){
@@ -100,9 +74,13 @@ describe('Menu', function(){
     });
 
     it('should call the callback when click item', function(){
+      var evt = document.createEvent('MouseEvents');
+      evt.initMouseEvent('click', true, true, document.defaultView, 0,0,0,0,0,false,false,false,0,null,null);
+    
       this.menu.update('tag');
       expect(this.called).to.equal(false);
-      this.menuElem.firstChild.onclick();
+//      this.menuElem.firstChild.onclick();
+      this.menuElem.dispatchEvent(evt);
       expect(this.called).to.equal(true);
     });
   });
